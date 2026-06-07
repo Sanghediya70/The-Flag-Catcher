@@ -1,0 +1,76 @@
+# TryHackMe: The Flag Catcher Walkthrough
+
+A complete walkthrough for the **The Flag Catcher** room on TryHackMe.
+* **Room URL:** https://tryhackme.com/room/theflagcatcher
+* **Difficulty:** Easy
+
+---
+
+## 🛠️ Tools Used
+* Nmap
+* Gobuster
+* Ffuf
+* LinPeas
+
+---
+
+## 🔍 Phase 1: Enumeration & Reconnaissance
+
+### Network Scanning
+I started by scanning the target IP using `nmap` to find open ports and running services.
+
+```bash
+nmap -sC -sV -oN nmap/initial.txt <TARGET_IP>
+```
+
+**Findings:**
+* **Port 22:** SSH open.
+* **Port 80:** HTTP server running Apache.
+
+### Web Directory Discovery
+Next, I ran `gobuster` to find hidden directories on the web server.
+
+```bash
+gobuster dir -u http://<TARGET_IP> -w /usr/share/wordlists/dirb/common.txt
+```
+* Found an administrative panel at `/secret-admin/`.
+
+---
+
+## 🚀 Phase 2: Exploitation
+
+### Vulnerability Analysis
+The admin panel was vulnerable to SQL Injection (SQLi) on the login form.
+
+### Gaining Initial Access
+By bypassing the authentication using `' OR 1=1 --`, I accessed the dashboard. I uploaded a reverse PHP shell to get a footprint on the server.
+
+```bash
+# Setting up listener
+nc -lvnp 4444
+```
+
+---
+
+## 👑 Phase 3: Privilege Escalation
+
+### Local Enumeration
+Once inside, I ran `sudo -l` to check the current user's privileges.
+* Found that the user could run `/usr/bin/python3` as root without a password.
+
+### Root Exploitation
+I abused this privilege by spawning a root shell using Python:
+
+```bash
+sudo python3 -c 'import os; os.system("/bin/bash")'
+```
+
+---
+
+## 🏁 Flags & Conclusion
+* **User Flag:** `THM{user_flag_here}`
+* **Root Flag:** `THM{root_flag_here}`
+
+### Key Takeaways
+1. Always check for simple web vulnerabilities before looking for complex exploits.
+2. Ensure binaries that run as `sudo` are strictly locked down.
